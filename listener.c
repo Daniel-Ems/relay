@@ -1,39 +1,55 @@
+#define _XOPEN_SOURCE
+#define _BSD_SOURCE
 #include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
+#include <stdlib.h> 
+#include <errno.h>
+#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <linux/futex.h>
-#include <sys/time.h>
+#include <signal.h>
+#include <string.h>
+#include <limits.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <sys/un.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+
+#define SOCK_PATH "echo_socket"
 
 int main(void)
 {
-    char buf[4096];
-    int file_descriptor;
-    char *data;
-    int futex_var = 1;
-    file_descriptor = shm_open("/danny_distributor", O_RDONLY,0400);
-    int pagesize = getpagesize();
-    if(file_descriptor == -1)
+
+    int var1, var2, var3;
+    struct sockaddr_in remote;
+    char str[100];
+
+    if((var1 = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
-        perror("file_descriptor");
+        perror("socket");
         exit(1);
     }
 
-    posix_fallocate(file_descriptor, 0, pagesize);
-    data = mmap(NULL, 4096, PROT_READ, MAP_SHARED, file_descriptor, 0);
-    if(data == (caddr_t)(-1))
+    printf("trying to connect...\n");
+
+    remote.sin_family = AF_INET;
+    remote.sin_port = htons(51236);
+    var2 = sizeof(remote);
+
+    if(connect(var1, (struct sockaddr *)&remote, var2) == -1)
     {
-        perror("mmap");
+        perror("connect");
         exit(1);
     }
 
-    for(;;)
+    printf("connected.\n");
+
+    while(recv(var1, str, 100, 0))
     {
-        futex(data, futex_var, FUTEX_WAIT, NULL);
-        printf("%s", data);
+        printf("%s", str);
     }
+    close(var1);
     return 0;
 }

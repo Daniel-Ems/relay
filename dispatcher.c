@@ -1,44 +1,138 @@
+#define _XOPEN_SOURCE
+#define _BSD_SOURCE
 #include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
+#include <stdlib.h> 
+#include <errno.h>
+#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <errno.h>
-#include <linux/futex.h>
+#include <signal.h>
+#include <string.h>
+#include <limits.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <sys/un.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+#include <stdbool.h>
+
+#define SOCK_PATH "echo_socket"
+
+//Needs to be volatile because it is affected outside the program. 
+
+volatile int what;
+volatile bool exit_run;
+volatile pthread_t fgets_thread;
+char str[4096];
+char buf[4096];
+int file_array[100];
+int i = 0;
+int s;
+
+//Allows for proper exit.
+void signal_handler(int signal_name)
+{
+        close(what);
+        printf("closed appropriately\n");
+        exit(1); 
+}
 
 
+void *fgets_function(void *arg)
+{
+    int *value;
+    value = (int*)1;
+    for(;;)
+    {
+        if(fgets(buf, sizeof(buf), stdin)==NULL)
+        {
+           break;
+        }
+        else
+        {
+            for(int a = 0; a <= i; a++)
+            { 
+                send(file_array[a], buf, strlen(buf) +1, 0);
+            }
+        }
+    }
+    close(what)
+    close(s);
+    exit(1);
+}
+
+    
 int main(void)
 {
 
-    struct stat sbuf;
-    int file_descriptor;
-    int futex_var = 0;;
-    file_descriptor = shm_open("/danny_distributor", O_RDWR | O_CREAT | O_TRUNC, 0644);
-    int pagesize = getpagesize();
-    if(file_descriptor == -1)
-    {
-        perror("shm_open");
-        exit(1);
-    }
+//sigaction struct  to handle sigint. 
+struct sigaction sigs;
 
-    posix_fallocate(file_descriptor, 0, pagesize);
-
-    char *data = mmap(NULL, 4096, PROT_WRITE, MAP_SHARED, file_descriptor, 0);
+sigs.sa_handler = signal_handler;
+sigs.sa_flags = 0;
+sigemptyset(&sigs.sa_mask);
 
 
-    if(data == (caddr_t)(-1))
-    {
-        perror("mmap");
+bool exit_run = false;
+int d_ip;
+int len;
+int t;
+int rc;
+int sc;
+int fg;
+int *value;
+
+
+struct sockaddr_in sa, remote;
+
+sa.sin_family = AF_INET;
+inet_pton(AF_INET, "127.0.0.1", &d_ip);
+sa.sin_addr.s_addr = d_ip;
+sa.sin_port = htons(51236);
+remote.sin_family = AF_INET;
+
+    if(s, sigaction(SIGINT, &sigs, NULL) == -1) {
+        perror("sigaction");
         exit(1);
     }
     
-
-    for(;;)
+    if((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
-        fgets(data, 4096, stdin);
-        futex(data, futex_var, FUTEX_WAKE, NULL);
+        perror("socket");
+        exit(1);
     }
-    return 0;
+
+    if((bind(s, (struct sockaddr *)&sa, sizeof(sa))) == -1)
+    {
+        perror("bind");
+        exit(1);
+    }
+
+    if(listen(s, 0) == -1)
+    {
+        perror("listen");
+        exit(1);
+    }
+
+    printf("Waiting for a connection ..\n");
+    fg = pthread_create((pthread_t *)&fgets_thread, NULL, fgets_function,(void *)&what);
+    for(;;)
+    { 
+        t = sizeof(remote);
+
+        if ((what = accept(s, (struct sockaddr *)&remote, &t)) == -1)
+        {
+            break;
+        }
+
+        file_array[i] = what;
+
+        i++;
+
+        printf("Connected. \n");
+    }
+
 }
+
