@@ -5,35 +5,40 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 #include <linux/futex.h>
-#include <sys/time.h>
+
 
 int main(void)
 {
-    char buf[4096];
+
+    struct stat sbuf;
     int file_descriptor;
-    char *data;
-    int futex_var = 1;
-    file_descriptor = shm_open("/danny_distributor", O_RDONLY,0400);
+    int futex_var = 0;;
+    file_descriptor = shm_open("/danny_distributor", O_RDWR | O_CREAT | O_TRUNC, 0644);
     int pagesize = getpagesize();
     if(file_descriptor == -1)
     {
-        perror("file_descriptor");
+        perror("shm_open");
         exit(1);
     }
 
     posix_fallocate(file_descriptor, 0, pagesize);
-    data = mmap(NULL, 4096, PROT_READ, MAP_SHARED, file_descriptor, 0);
+
+    char *data = mmap(NULL, 4096, PROT_WRITE, MAP_SHARED, file_descriptor, 0);
+
+
     if(data == (caddr_t)(-1))
     {
         perror("mmap");
         exit(1);
     }
+    
 
     for(;;)
     {
-        futex(data, futex_var, FUTEX_WAIT, NULL);
-        printf("%s", data);
+        fgets(data, 4096, stdin);
+        futex(data, futex_var, FUTEX_WAKE, NULL);
     }
     return 0;
 }
