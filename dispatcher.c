@@ -48,7 +48,9 @@ void *fgets_function(void *arg)
     {
         if(fgets(buf, sizeof(buf), stdin)==NULL)
         {
-           break;
+           shutdown(s, SHUT_RDWR);
+           //close(s);
+           pthread_exit(NULL);
         }
         else
         {
@@ -58,7 +60,7 @@ void *fgets_function(void *arg)
             }
         }
     }
-    close(what)
+    close(what);
     close(s);
     exit(1);
 }
@@ -74,10 +76,7 @@ sigs.sa_handler = signal_handler;
 sigs.sa_flags = 0;
 sigemptyset(&sigs.sa_mask);
 
-
-bool exit_run = false;
 int d_ip;
-int len;
 int t;
 int rc;
 int sc;
@@ -90,10 +89,10 @@ struct sockaddr_in sa, remote;
 sa.sin_family = AF_INET;
 inet_pton(AF_INET, "127.0.0.1", &d_ip);
 sa.sin_addr.s_addr = d_ip;
-sa.sin_port = htons(51236);
+sa.sin_port  = htons(51236);
 remote.sin_family = AF_INET;
 
-    if(s, sigaction(SIGINT, &sigs, NULL) == -1) {
+    if(sigaction(SIGINT, &sigs, NULL) == -1) {
         perror("sigaction");
         exit(1);
     }
@@ -110,20 +109,21 @@ remote.sin_family = AF_INET;
         exit(1);
     }
 
-    if(listen(s, 0) == -1)
+    if(listen(s, 100) == -1)
     {
         perror("listen");
         exit(1);
     }
 
     printf("Waiting for a connection ..\n");
-    fg = pthread_create((pthread_t *)&fgets_thread, NULL, fgets_function,(void *)&what);
+    fg = pthread_create((pthread_t *)&fgets_thread, NULL, fgets_function,(void *)&s);
     for(;;)
     { 
         t = sizeof(remote);
-
+        
         if ((what = accept(s, (struct sockaddr *)&remote, &t)) == -1)
         {
+            pthread_join(fgets_thread, NULL);
             break;
         }
 
@@ -133,6 +133,9 @@ remote.sin_family = AF_INET;
 
         printf("Connected. \n");
     }
+    //close(s);
+    close(s);
+    return 0;
 
 }
 
