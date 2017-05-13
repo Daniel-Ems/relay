@@ -45,21 +45,25 @@ int i = 0; //array counter
 //Allows for proper handling of Sigint(str-c).
 void signal_handler(int signal_name)
 {
-        shutdown(server_fd, SHUT_RDWR);
-        close(server_fd);
-        exit(1);
+        if(signal_name == SIGINT)
+        {
+            shutdown(server_fd, SHUT_RDWR);
+            close(server_fd);
+            exit(1);
+        }
 }
 
 //Threaded to handle user input.
-void *fgets_function(void *arg)
+void *fgets_function(void *args)
 {
+    args = NULL;
     for(;;)
     {
         //If recieves EOT: send shutdown signals and exit thread.
         if(fgets(buf, sizeof(buf), stdin)==NULL)
         {
            shutdown(server_fd, SHUT_RDWR);
-           pthread_exit(NULL);
+           pthread_exit(args);
         }
         else
         {
@@ -130,10 +134,15 @@ int main(void)
     int t_retval;
     //Thread fgets in order to allow a fgets to constantly be able to revieve
     //input and send to file descriptors in fd_array.
-    t_retval = pthread_create((pthread_t *)&fgets_thread, NULL, fgets_function,
-                                                            (void *)&server_fd);
+    t_retval = pthread_create((pthread_t *)&fgets_thread, NULL, fgets_function, NULL);
+                                                                         
+    if(t_retval)
+    {
+        perror("thread");
+        exit(1);
+    }
     //used for readability in accept.
-    int rs_size;
+    unsigned int rs_size;
 
     //loop is necessary to continue entering into accept blocks.
     for(;;)
