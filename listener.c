@@ -17,16 +17,20 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-#define SOCK_PATH "echo_socket"
+enum port{ PORT = 51236 };
+
 
 int main(void)
 {
 
-    int var1, var2, var3;
-    struct sockaddr_in remote;
+    int client_fd;
+    int client_sz;
+
+    struct sockaddr_in client_struct;
+
     char str[100];
 
-    if((var1 = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    if((client_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
         perror("socket");
         exit(1);
@@ -34,11 +38,12 @@ int main(void)
 
     printf("trying to connect...\n");
 
-    remote.sin_family = AF_INET;
-    remote.sin_port = htons(51236);
-    var2 = sizeof(remote);
+    client_struct.sin_family = AF_INET;
+    client_struct.sin_port = htons(PORT);
 
-    if(connect(var1, (struct sockaddr *)&remote, var2) == -1)
+    client_sz = sizeof(client_struct);
+
+    if(connect(client_fd, (struct sockaddr *)&client_struct, client_sz) == -1)
     {
         perror("connect");
         exit(1);
@@ -46,10 +51,11 @@ int main(void)
 
     printf("connected.\n");
 
-    while(recv(var1, str, 100, 0))
+    while(recv(client_fd, str, 100, 0))
     {
         printf("%s", str);
     }
-    close(var1);
+    shutdown(client_fd, SHUT_RDWR);
+    close(client_fd);
     return 0;
 }
