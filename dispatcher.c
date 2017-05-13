@@ -22,7 +22,7 @@ enum port{
            //The port being used. Changes must be reflected in listener.c
            PORT = 51236,
            //MAX buffer sie for fgets
-           MAX_BUF = 4096,
+           MAX_BUF = 100,
            //Maximum number of connections allowed. 
            MAX_CONNECT = 100,
          };
