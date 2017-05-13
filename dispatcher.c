@@ -140,7 +140,8 @@ int main(void)
     int t_retval;
     //Thread fgets in order to allow a fgets to constantly be able to revieve
     //input and send to file descriptors in fd_array.
-    t_retval = pthread_create((pthread_t *)&fgets_thread, NULL, fgets_function, NULL);
+    t_retval = pthread_create((pthread_t *)&fgets_thread, NULL, fgets_function, 
+                                                                         NULL);
                                                                          
     if(t_retval)
     {
