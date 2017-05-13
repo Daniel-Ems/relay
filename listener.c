@@ -17,18 +17,21 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-enum port{ PORT = 51236 };
+//port to be used
+enum port{ 
+           PORT = 51236,
+           MAX_MESS = 100,
+         };
 
 
 int main(void)
 {
-
     int client_fd;
     int client_sz;
 
     struct sockaddr_in client_struct;
 
-    char str[100];
+    char str[MAX_MESS];
 
     if((client_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
