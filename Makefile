@@ -22,11 +22,11 @@ $(LISTENER_BIN):$(LISTENER_DEPS)
 
 
 debug: CLFAGS+=-g
-debug: $(all)
+debug: all
 
 profile: CFLAGS+=-pg
 profile: LDFLAGS+=-pg
-profile: $(all)
+profile: all
 
 
 clean: 
