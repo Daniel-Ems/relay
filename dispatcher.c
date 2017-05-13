@@ -18,6 +18,12 @@
 #include <pthread.h>
 #include <stdbool.h>
 
+/*
+   ports have a TIME_WAIT attached which makes ports wait upon closing for 
+   any packets still in the network. This will cause a slight delay between 
+   runs of the program. We appreciate your patieints.
+*/
+
 enum port{ 
            //The port being used. Changes must be reflected in listener.c
            PORT = 51236,
